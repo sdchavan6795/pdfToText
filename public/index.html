@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Text Extractor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .message {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Upload PDF to Extract Text</h2>
+    <input type="file" id="pdfFile" accept=".pdf" />
+    <button onclick="uploadFile()">Upload and Process</button>
+
+    <div id="message" class="message"></div>
+    <div id="downloadLink" class="message"></div>
+</div>
+
+<script>
+    async function uploadFile() {
+        const fileInput = document.getElementById('pdfFile');
+        const messageDiv = document.getElementById('message');
+        const downloadLinkDiv = document.getElementById('downloadLink');
+
+        if (!fileInput.files[0]) {
+            messageDiv.textContent = 'Please select a PDF file.';
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        messageDiv.textContent = 'Processing...';
+
+        try {
+            const response = await fetch('/api/process', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                messageDiv.textContent = `Error: ${result.error}`;
+            } else {
+                const textBlob = new Blob([result.text], { type: 'text/plain' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(textBlob);
+                link.download = 'extracted_text.txt';
+                link.textContent = 'Download Processed Text File';
+
+                downloadLinkDiv.innerHTML = '';
+                downloadLinkDiv.appendChild(link);
+                messageDiv.textContent = '';
+            }
+        } catch (error) {
+            messageDiv.textContent = 'An error occurred while processing the file.';
+            console.error(error);
+        }
+    }
+</script>
+
+</body>
+</html>
